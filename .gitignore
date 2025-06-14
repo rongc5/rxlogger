@@ -1,0 +1,114 @@
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Executables
+*.exe
+*.out
+test_logger
+comprehensive_test
+debug_config
+runtime_config_test
+
+# Build directories
+obj/
+build/
+.build/
+
+# Log files
+logs/
+*.log
+*.ft
+*.wn
+*.nt
+*.tc
+*.db
+
+# Log files with timestamps
+*.log.*
+*.ft.*
+*.wn.*
+*.nt.*
+*.tc.*
+*.db.*
+
+# Configuration backup files
+*.conf.bak
+*.conf.old
+*.conf~
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+core
+core.*
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# CMake files (if used in future)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile.cmake
+
+# Autotools files (if used in future)
+.deps/
+.libs/
+*.la
+*.lo
+Makefile.in
+aclocal.m4
+autom4te.cache/
+config.guess
+config.sub
+configure
+depcomp
+install-sh
+ltmain.sh
+missing
+
+# Package files
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.zip
+
+# Test output files
+test_output/
+test_results/
+
+# Profiling files
+gmon.out
+*.gcov
+*.gcda
+*.gcno
+
+# Valgrind files
+*.valgrind
+vgcore.*
+
+# Custom test configurations
+test_*.conf
+debug_*.conf 

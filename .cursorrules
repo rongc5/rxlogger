@@ -1,0 +1,80 @@
+# Cursor Rules for Logger Project
+
+## Project Context
+This is a C++ logging library extracted from myframe project. It provides:
+- Multi-level logging (FATAL, WARNING, NOTICE, TRACE, DEBUG)
+- Asynchronous writing with dedicated thread
+- File rotation based on size
+- Configuration hot-reload
+- Thread-safe operations
+
+## Code Style Guidelines
+
+### C++ Standards
+- Use C++11 or later features
+- Prefer RAII and smart pointers
+- Use const correctness
+- Follow Google C++ Style Guide basics
+
+### Naming Conventions
+- Classes: PascalCase (e.g., `LogThread`, `BaseThread`)
+- Functions: snake_case (e.g., `log_init`, `check_type`)
+- Variables: snake_case (e.g., `log_path`, `file_max_size`)
+- Constants: UPPER_SNAKE_CASE (e.g., `LOGTYPEDEBUG`)
+- Macros: UPPER_SNAKE_CASE (e.g., `LOG_DEBUG`, `LOG_INIT`)
+
+### File Organization
+- Headers in `include/` directory
+- Source files in `src/` directory
+- Tests in `test/` directory
+- Documentation in `docs/` directory
+- Examples in `example/` directory
+
+### Documentation
+- Use Chinese for user-facing documentation
+- Use English for code comments
+- Include usage examples in documentation
+- Keep README.md concise, detailed docs in `docs/`
+
+## Development Guidelines
+
+### When modifying code:
+1. Maintain thread safety
+2. Preserve backward compatibility
+3. Update relevant tests
+4. Consider performance impact
+5. Update documentation if API changes
+
+### When adding features:
+1. Follow existing patterns
+2. Add comprehensive tests
+3. Document new functionality
+4. Consider configuration options
+5. Maintain simplicity
+
+### Testing Requirements
+- Test all log levels
+- Test multi-threading scenarios
+- Test configuration reload
+- Test file rotation
+- Test error conditions
+
+## Build System
+- Use provided Makefile
+- Generate static library `liblogger.a`
+- Support both debug and release builds
+- Include proper compiler flags for thread safety
+
+## Performance Considerations
+- Prefer async mode for production
+- Minimize string operations in hot paths
+- Use appropriate log levels
+- Consider disk I/O impact
+- Monitor memory usage
+
+## Common Patterns
+- Use singleton pattern for log thread
+- Use RAII for resource management
+- Use bit masks for log level configuration
+- Use file timestamp for configuration reload detection
+- Use queue for async log processing 
