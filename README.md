@@ -1,4 +1,4 @@
-# Logger 日志系统
+# RxLogger 日志系统
 
 从 myframe/core 中抽取的独立日志系统，支持多级别日志、异步写入、文件轮转等功能。
 
@@ -14,14 +14,10 @@
 ## 目录结构
 
 ```
-logger/
+rxlogger/
 ├── docs/             # 文档目录
-│   ├── README.md            # 详细说明文档
 │   ├── QUICK_START.md       # 快速入门指南
 │   ├── USAGE_GUIDE.md       # 使用指南
-│   ├── PERFORMANCE_ANALYSIS.md # 性能分析报告
-│   ├── TEST_REPORT.md       # 测试报告
-│   ├── RUNTIME_CONFIG_GUIDE.md # 运行时配置指南
 │   └── PROJECT_SUMMARY.md   # 项目总结
 ├── example/          # 示例代码
 │   └── simple_example.cpp
