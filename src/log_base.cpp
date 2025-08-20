@@ -6,45 +6,45 @@ log_conf::log_conf(const char* sk_conf) {
 }
 
 int log_conf::load() {
-    FILE* fp = fopen(_log_conf_filename.c_str(), "r");
-    ASSERT_WARNING(fp != NULL, "open log conf failed. path[%s]", _log_conf_filename.c_str());
-    
-    if (!fp) {
+    std::ifstream file(_log_conf_filename);
+    if (!file.is_open()) {
+        ASSERT_WARNING(false, "open log conf failed. path[%s]", _log_conf_filename.c_str());
         return -1;
     }
 
-    char line[SIZE_LEN_1024];
-    char* ptr = NULL;
-    vector<string> tmp_vec;
+    std::string line;
+    std::vector<std::string> tmp_vec;
     
-    while (fgets(line, 1024, fp)) {
-        if('\0' == line[0]) {
+    while (std::getline(file, line)) {
+        if (line.empty()) {
             continue;
         }
 
-        ptr = im_chomp(line);
-        ptr = im_chomp(ptr, '#');
-
-        if (ptr == NULL || *ptr == '\0'|| *ptr == '#') {
+        // Remove comments and trailing whitespace
+        size_t comment_pos = line.find('#');
+        if (comment_pos != std::string::npos) {
+            line = line.substr(0, comment_pos);
+        }
+        
+        line = trim(line);
+        if (line.empty()) {
             continue;
         }
 
-        SplitString(ptr, "=", &tmp_vec, SPLIT_MODE_ONE | SPLIT_MODE_TRIM);
+        SplitString(line, "=", &tmp_vec, SPLIT_MODE_ONE | SPLIT_MODE_TRIM);
         if (tmp_vec.size() != 2) {
             continue;
         }
 
-        char* key = trim(tmp_vec[0].c_str());
-        char* value = trim(tmp_vec[1].c_str());
+        const std::string& key = tmp_vec[0];
+        const std::string& value = tmp_vec[1];
         
-        if (key && value) {
-            _cfg.insert(make_pair(string(key), string(value)));
-            free(key);
-            free(value);
+        if (!key.empty() && !value.empty()) {
+            _cfg.insert(make_pair(key, value));
         }
     }
 
-    fclose(fp);
+    file.close();
     do_parse();
 
     struct stat st;
@@ -55,7 +55,7 @@ int log_conf::load() {
 }
 
 void log_conf::get_file_name(LogType type) {
-    stringstream ss;
+    std::stringstream ss;
 
     switch (type) {   
         case LOGTYPEFATAL:
@@ -91,27 +91,42 @@ void log_conf::do_parse() {
     model = LOGTHREAD;
     _dumppath.assign("log_conf_dump");
 
-    if (has_key<string, string>(_cfg, "file_max_size")) {    
-        file_max_size = atoi(_cfg["file_max_size"].c_str());
+    if (has_key<std::string, std::string>(_cfg, "file_max_size")) {    
+        try {
+            file_max_size = std::stoi(_cfg["file_max_size"]);
+        } catch (const std::exception& e) {
+            // Keep default value on conversion error
+            file_max_size = DEFAULT_LOG_MAX_SIZE;
+        }
     } 
 
-    if (has_key<string, string>(_cfg, "log_path")) {
+    if (has_key<std::string, std::string>(_cfg, "log_path")) {
         log_path = _cfg["log_path"];
     }
 
-    if (has_key<string, string>(_cfg, "prefix_file_name")) {
+    if (has_key<std::string, std::string>(_cfg, "prefix_file_name")) {
         prefix_file_name = _cfg["prefix_file_name"];
     }
 
-    if (has_key<string, string>(_cfg, "type")) {    
-        type = (LogType)atoi(_cfg["type"].c_str());
+    if (has_key<std::string, std::string>(_cfg, "type")) {    
+        try {
+            type = (LogType)std::stoi(_cfg["type"]);
+        } catch (const std::exception& e) {
+            // Keep default value on conversion error
+            type = LOGTYPEDEBUG;
+        }
     } 
 
-    if (has_key<string, string>(_cfg, "model")) {    
-        model = (LogModel)atoi(_cfg["model"].c_str());
+    if (has_key<std::string, std::string>(_cfg, "model")) {    
+        try {
+            model = (LogModel)std::stoi(_cfg["model"]);
+        } catch (const std::exception& e) {
+            // Keep default value on conversion error
+            model = LOGTHREAD;
+        }
     } 
 
-    if (has_key<string, string>(_cfg, "dumppath")) {
+    if (has_key<std::string, std::string>(_cfg, "dumppath")) {
         _dumppath = _cfg["dumppath"];
     }
     

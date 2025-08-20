@@ -9,7 +9,7 @@ char* im_chomp(char* str, char c) {
         end--;
     }
     
-    // 处理开头的字符
+    // Remove leading characters
     while (*str == c) {
         str++;
     }
@@ -17,44 +17,31 @@ char* im_chomp(char* str, char c) {
     return str;
 }
 
-char* trim(const char* str) {
-    if (!str) return NULL;
-    
-    // 跳过开头的空白字符
-    while (*str && (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r')) {
-        str++;
+std::string trim(const std::string& str) {
+    if (str.empty()) {
+        return str;
     }
     
-    if (*str == '\0') {
-        static char empty[] = "";
-        return empty;
+    // Find first non-whitespace character
+    size_t start = str.find_first_not_of(" \t\n\r");
+    if (start == std::string::npos) {
+        return std::string(); // All whitespace
     }
     
-    // 找到结尾
-    const char* end = str + strlen(str) - 1;
-    while (end > str && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r')) {
-        end--;
-    }
+    // Find last non-whitespace character
+    size_t end = str.find_last_not_of(" \t\n\r");
     
-    // 分配内存并复制字符串
-    size_t len = end - str + 1;
-    char* result = (char*)malloc(len + 1);
-    if (result) {
-        strncpy(result, str, len);
-        result[len] = '\0';
-    }
-    
-    return result;
+    return str.substr(start, end - start + 1);
 }
 
 void get_proc_name(char* name, size_t size) {
     if (!name || size == 0) return;
     
-    // Linux实现：从/proc/self/comm读取进程名
+    // Linux implementation: get process name from /proc/self/comm
     FILE* file = fopen("/proc/self/comm", "r");
     if (file) {
         if (fgets(name, size, file)) {
-            // 去掉换行符
+            // Remove trailing newline
             char* newline = strchr(name, '\n');
             if (newline) *newline = '\0';
         } else {
@@ -63,7 +50,7 @@ void get_proc_name(char* name, size_t size) {
         }
         fclose(file);
     } else {
-        // 备用方案：使用"logger"作为默认名称
+        // Fallback: use "logger" as default name
         strncpy(name, "logger", size - 1);
         name[size - 1] = '\0';
     }
@@ -86,17 +73,31 @@ void get_timestr_millSecond(char* buf, size_t size, const char* format) {
     struct tm* timeinfo = localtime(&tv.tv_sec);
     size_t len = strftime(buf, size, format, timeinfo);
     
-    // 添加毫秒
+    // Append milliseconds
     if (len < size - 4) {
         snprintf(buf + len, size - len, ".%03d", (int)(tv.tv_usec / 1000));
     }
 }
 
-string strError(int error_code) {
-    return string(strerror(error_code));
+std::string strError(int error_code) {
+    return std::string(strerror(error_code));
 }
 
-void SplitString(const string& str, const string& delimiter, vector<string>* result, int mode) {
+uint64_t get_thread_id() {
+    auto id = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << id;
+    uint64_t thread_id = 0;
+    try {
+        thread_id = std::stoull(ss.str());
+    } catch (...) {
+        // Fallback: use hash of thread id
+        thread_id = std::hash<std::thread::id>{}(id);
+    }
+    return thread_id;
+}
+
+void SplitString(const std::string& str, const std::string& delimiter, std::vector<std::string>* result, int mode) {
     if (!result) return;
     
     result->clear();
@@ -109,47 +110,32 @@ void SplitString(const string& str, const string& delimiter, vector<string>* res
     size_t start = 0;
     size_t found = 0;
     
-    while ((found = str.find(delimiter, start)) != string::npos) {
-        string token = str.substr(start, found - start);
+    while ((found = str.find(delimiter, start)) != std::string::npos) {
+        std::string token = str.substr(start, found - start);
         
         if (mode & SPLIT_MODE_TRIM) {
-            char* trimmed = trim(token.c_str());
-            if (trimmed) {
-                result->push_back(string(trimmed));
-                free(trimmed);
-            }
-        } else {
-            result->push_back(token);
+            token = trim(token);
         }
+        result->push_back(token);
         
         start = found + delimiter.length();
         
         if (mode & SPLIT_MODE_ONE) {
-            // 只分割一次
-            string remaining = str.substr(start);
+            // Only split once
+            std::string remaining = str.substr(start);
             if (mode & SPLIT_MODE_TRIM) {
-                char* trimmed = trim(remaining.c_str());
-                if (trimmed) {
-                    result->push_back(string(trimmed));
-                    free(trimmed);
-                }
-            } else {
-                result->push_back(remaining);
+                remaining = trim(remaining);
             }
+            result->push_back(remaining);
             break;
         }
     }
     
     if (start < str.length()) {
-        string token = str.substr(start);
+        std::string token = str.substr(start);
         if (mode & SPLIT_MODE_TRIM) {
-            char* trimmed = trim(token.c_str());
-            if (trimmed) {
-                result->push_back(string(trimmed));
-                free(trimmed);
-            }
-        } else {
-            result->push_back(token);
+            token = trim(token);
         }
+        result->push_back(token);
     }
 } 

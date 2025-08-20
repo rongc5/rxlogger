@@ -3,29 +3,30 @@
 
 #include "logger_def.h"
 
-// 工具函数声明
+// Utility functions
 char* im_chomp(char* str, char c = '\n');
-char* trim(const char* str);
+std::string trim(const std::string& str);
 void get_proc_name(char* name, size_t size);
 void get_timestr(char* buf, size_t size, const char* format);
 void get_timestr_millSecond(char* buf, size_t size, const char* format);
-string strError(int error_code);
+std::string strError(int error_code);
+uint64_t get_thread_id();
 
-// 字符串分割函数
-void SplitString(const string& str, const string& delimiter, vector<string>* result, int mode = 0);
+// String splitting
+void SplitString(const std::string& str, const std::string& delimiter, std::vector<std::string>* result, int mode = 0);
 
-// 配置解析相关
+// Collection utilities
 template<typename K, typename V>
-bool has_key(const map<K, V>& m, const K& key) {
+bool has_key(const std::map<K, V>& m, const K& key) {
     return m.find(key) != m.end();
 }
 
-// 异常处理宏
+// Exception utilities
 #define THROW_COMMON_EXCEPT(msg) \
     do { \
-        stringstream ss; \
+        std::stringstream ss; \
         ss << msg; \
-        throw runtime_error(ss.str()); \
+        throw std::runtime_error(ss.str()); \
     } while(0)
 
 #endif 

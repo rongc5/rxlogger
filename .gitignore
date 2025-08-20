@@ -1,0 +1,20 @@
+# Build artifacts
+build/
+obj/
+
+# Libraries and executables
+*.a
+*.so
+*.o
+
+# Test and example binaries
+test_logger
+example/simple_example
+
+# IDE-specific files
+.vscode/
+.idea/
+
+# Other
+*.swp
+*~

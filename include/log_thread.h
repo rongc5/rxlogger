@@ -6,23 +6,26 @@
 
 class log_thread;
 
-class log_msg {
-public:
-    log_msg() {
-        _buf = NULL;
-        _logid = 0;
+// Helper for C++11 variadic template recursion
+namespace detail {
+    inline void write_to_stream(std::stringstream&) {
+        // Base case: do nothing
     }
     
-    virtual ~log_msg() {
-        if (_buf) {
-            delete _buf;
-            _buf = NULL;
-        }
+    template<typename T, typename... Args>
+    void write_to_stream(std::stringstream& ss, const T& first, const Args&... rest) {
+        ss << first;
+        write_to_stream(ss, rest...);
     }
+}
+
+class log_msg {
+public:
+    log_msg() : _type(LOGTYPEDEBUG), _logid(0) {}
 
     LogType _type;
     std::string _fname;
-    std::vector<char>* _buf;
+    std::unique_ptr<std::vector<char>> _buf;
     uint64_t _logid;
 };
 
@@ -32,8 +35,14 @@ public:
     virtual ~log_thread();
 
     static void init(const char* path);
-    static void log_write(LogType type, const char* format, ...);
-    static void log_write(const char* filename, const char* format, ...);
+    static void wait_for_init();
+    
+    // Type-safe variadic template versions
+    template<typename... Args>
+    static void log_write_safe(LogType type, const Args&... args);
+    template<typename... Args>
+    static void log_write_safe(const char* filename, const Args&... args);
+    
     static uint64_t get_logid();
 
     void handle_msg(std::shared_ptr<log_msg>& p_msg);
@@ -61,29 +70,31 @@ private:
     uint32_t _epoll_size;
     std::string _recv_buf;
     volatile int _current;
-    reload_mgr<log_conf>* _rlog_conf; 
+    std::unique_ptr<reload_mgr<log_conf>> _rlog_conf; 
     static uint64_t log_global_id;
+    static std::mutex _init_mutex;
+    static std::condition_variable _init_cv;
+    static bool _init_completed;
 };
 
 class log_stream {
 public:
-    log_stream(LogType type, int line, string func, string file) {
-        ss = make_shared<stringstream>();
+    log_stream(LogType type, int line, std::string func, std::string file) {
         switch (type) {
             case LOGTYPEDEBUG:
-                *ss << "DEBUG:[" << pthread_self() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "DEBUG:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
                 break;
             case LOGTYPETRACE:
-                *ss << "TRACE:[" << pthread_self() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "TRACE:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
                 break;
             case LOGTYPENOTICE:
-                *ss << "NOTICE:[" << pthread_self() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "NOTICE:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
                 break;
             case LOGTYPEFATAL:
-                *ss << "FATAL:[" << pthread_self() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "FATAL:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
                 break;
             case LOGTYPEWARNING:
-                *ss << "WARNING:[" << pthread_self() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "WARNING:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
                 break;
             default:
                 break;
@@ -92,22 +103,71 @@ public:
     }
 
     ~log_stream() {
-        log_thread::log_write(_type, "%s", ss->str().data());
+        log_thread::log_write_safe(_type, ss.str());
     }
     
     template <typename T>
     log_stream& operator<<(const T& data) {
-        *ss << data;
+        ss << data;
         return *this;
     }
+    
+    // Type-safe variadic log method
+    template<typename... Args>
+    void log_safe(const Args&... args) {
+        detail::write_to_stream(ss, args...);
+    }
 
-    string str() {   
-        return ss->str();
+    std::string str() {   
+        return ss.str();
     }  
     
 private:
-    shared_ptr<stringstream> ss;
+    std::stringstream ss;
     LogType _type;
 };
+
+// Template method implementations
+template<typename... Args>
+void log_thread::log_write_safe(LogType type, const Args&... args) {
+    log_thread* thread = base_singleton<log_thread>::get_instance();
+    if (!thread || !thread->check_type(type)) {
+        return;
+    }
+    
+    std::stringstream ss;
+    char log_common_tmp[SIZE_LEN_64];
+    get_timestr_millSecond(log_common_tmp, sizeof(log_common_tmp), LOG_DATE_FORMAT);
+    
+    ss << "[" << thread->_proc_name << "]:[" << log_common_tmp << "] ";
+    
+    // Use C++11 recursive template approach
+    detail::write_to_stream(ss, args...);
+    
+    std::shared_ptr<log_msg> lmsg = std::make_shared<log_msg>();
+    std::string log_content = ss.str();
+    lmsg->_buf.reset(new std::vector<char>(log_content.begin(), log_content.end()));
+    lmsg->_buf->push_back('\0'); // Null terminate
+    lmsg->_type = type;
+    thread->put_msg(lmsg);
+}
+
+template<typename... Args>
+void log_thread::log_write_safe(const char* filename, const Args&... args) {
+    log_thread* thread = base_singleton<log_thread>::get_instance();
+    if (!thread) {
+        return;
+    }
+    
+    std::stringstream ss;
+    detail::write_to_stream(ss, args...);
+    
+    std::shared_ptr<log_msg> lmsg = std::make_shared<log_msg>();
+    std::string log_content = ss.str();
+    lmsg->_buf.reset(new std::vector<char>(log_content.begin(), log_content.end()));
+    lmsg->_buf->push_back('\0'); // Null terminate
+    lmsg->_fname.append(filename);
+    thread->put_msg(lmsg);
+}
 
 #endif 

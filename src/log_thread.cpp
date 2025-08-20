@@ -2,6 +2,9 @@
 #include "../include/base_thread.h"
 
 uint64_t log_thread::log_global_id = 0;
+std::mutex log_thread::_init_mutex;
+std::condition_variable log_thread::_init_cv;
+bool log_thread::_init_completed = false;
 
 log_thread::log_thread() {
     _epoll_fd = -1;
@@ -25,42 +28,22 @@ log_thread::~log_thread() {
         close(_channelid);
     }
     
-    if (_rlog_conf) {
-        delete _rlog_conf;
-    }
 
     _queue[_current].clear();
     _queue[1- _current].clear();
 }
 
 void log_thread::init(const char* path) {
-    log_thread* thread = base_singleton<log_thread>::get_instance_ex();
+    log_thread* thread = base_singleton<log_thread>::get_instance();
     thread->log_thread_init(path);
     thread->start();
 }
 
-void log_thread::log_write(const char* filename, const char* format, ...) {
-    log_thread* thread = base_singleton<log_thread>::get_instance_ex();
-    if (!thread) {
-        return;
-    }
-
-    va_list args1, args2;
-    va_start(args1, format);
-    va_copy(args2, args1);
-
-    std::shared_ptr<log_msg> lmsg(new log_msg());
-    if (lmsg) {
-        lmsg->_buf = new std::vector<char>(vsnprintf(NULL, 0, format, args1) + 1);
-        va_end(args1);
-
-        vsnprintf(lmsg->_buf->data(), lmsg->_buf->size(), format, args2);
-        va_end(args2);
-        
-        lmsg->_fname.append(filename);
-        thread->put_msg(lmsg);
-    }
+void log_thread::wait_for_init() {
+    std::unique_lock<std::mutex> lock(_init_mutex);
+    _init_cv.wait(lock, []{ return _init_completed; });
 }
+
 
 bool log_thread::check_type(LogType type) {
     log_conf* conf = _rlog_conf->current();
@@ -70,38 +53,6 @@ bool log_thread::check_type(LogType type) {
     return false;
 }
 
-void log_thread::log_write(LogType type, const char* format, ...) {
-    log_thread* thread = base_singleton<log_thread>::get_instance_ex();
-    if (!thread) {
-        return;
-    }
-
-    if (!thread->check_type(type)) {
-        return;
-    }
-
-    char log_common_tmp[SIZE_LEN_64];
-    get_timestr_millSecond(log_common_tmp, sizeof(log_common_tmp), LOG_DATE_FORMAT);
-    uint32_t prefix_len = thread->_proc_name.size() + strlen(log_common_tmp) + SIZE_LEN_16;
-    
-    va_list args1, args2;
-    va_start(args1, format);
-    va_copy(args2, args1);
-
-    std::shared_ptr<log_msg> lmsg(new log_msg());
-    if (lmsg) {
-        lmsg->_buf = new std::vector<char>(prefix_len + vsnprintf(NULL, 0, format, args1) + 1);
-        va_end(args1);
-
-        uint32_t ret = snprintf(lmsg->_buf->data(), lmsg->_buf->size(), "[%s]:[%s] ", 
-                thread->_proc_name.c_str(), log_common_tmp);
-        vsnprintf(lmsg->_buf->data() + ret, lmsg->_buf->size() - ret, format, args2);
-        va_end(args2);
-        
-        lmsg->_type = type;
-        thread->put_msg(lmsg);
-    }
-}
 
 void log_thread::put_msg(std::shared_ptr<log_msg>& p_msg) {
     log_conf* conf = _rlog_conf->current();
@@ -154,7 +105,7 @@ void log_thread::check_to_renmae(const char* filename, int max_size) {
     struct stat statBuf;
     
     if (stat(filename, &statBuf) != 0) {
-        return;  // 文件不存在
+        return;  // File does not exist
     }
 
     if (max_size && statBuf.st_size >= max_size) {
@@ -169,7 +120,10 @@ void log_thread::log_thread_init(const char* path) {
         return;
     }
 
-    _rlog_conf = new reload_mgr<log_conf>(new log_conf(path), new log_conf(path));
+    _rlog_conf.reset(new reload_mgr<log_conf>(
+        std::unique_ptr<log_conf>(new log_conf(path)), 
+        std::unique_ptr<log_conf>(new log_conf(path))
+    ));
     log_conf_init();
 
     _epoll_fd = epoll_create(DAFAULT_EPOLL_SIZE);
@@ -203,6 +157,13 @@ void log_thread::log_thread_init(const char* path) {
     char tmp_buff[SIZE_LEN_128];
     get_proc_name(tmp_buff, sizeof(tmp_buff));
     _proc_name.append(tmp_buff);
+    
+    // Notify that initialization is complete
+    {
+        std::lock_guard<std::mutex> lock(_init_mutex);
+        _init_completed = true;
+    }
+    _init_cv.notify_all();
 }
 
 void log_thread::log_conf_init() {
@@ -241,21 +202,26 @@ int log_thread::RECV(int fd, void* buf, size_t len) {
 }
 
 size_t log_thread::process_recv_buf(const char* buf, const size_t len) {
-    std::deque<std::shared_ptr<log_msg> >::iterator it;
+    std::deque<std::shared_ptr<log_msg>> processing_queue;
 
     {
-        std::deque<std::shared_ptr<log_msg> >& queue = _queue[_current];
-        if (queue.begin() == queue.end()) {
-            std::lock_guard<std::mutex> lck(_mutex);
+        std::lock_guard<std::mutex> lck(_mutex);
+        std::deque<std::shared_ptr<log_msg>>& queue = _queue[_current];
+        
+        if (queue.empty()) {
             _current = 1 - _current;
+            queue = _queue[_current];
         }
-    }
+        
+        // Swap the queue with empty processing_queue - O(1) operation
+        processing_queue.swap(queue);
+    } // Lock is released here
 
-    std::deque<std::shared_ptr<log_msg> >& queue = _queue[_current];
-    for (it = queue.begin(); it != queue.end();) {
-        handle_msg(*it);
-        it = queue.erase(it);
+    // Process all messages without holding the lock
+    for (auto& msg : processing_queue) {
+        handle_msg(msg);
     }
+    // processing_queue is automatically destroyed here, freeing memory
 
     return len;
 }

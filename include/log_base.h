@@ -4,7 +4,6 @@
 #include "logger_def.h"
 #include "logger_util.h"
 
-using namespace std;
 
 enum LogType {
     LOGTYPEFATAL = 1,
@@ -21,7 +20,7 @@ enum LogModel {
     LOGMODELSIZE
 };
 
-// 简化的重载接口基类
+// Simplified reload interface base class
 class reload_inf {
 public:
     virtual ~reload_inf() {}
@@ -32,25 +31,21 @@ public:
     virtual int destroy() = 0;
 };
 
-// 重载管理器模板
+// Reload manager template
 template<typename T>
 class reload_mgr {
 private:
-    T* _current;
-    T* _backup;
+    std::unique_ptr<T> _current;
+    std::unique_ptr<T> _backup;
     std::mutex _mutex;
 
 public:
-    reload_mgr(T* current, T* backup) : _current(current), _backup(backup) {}
-    
-    ~reload_mgr() {
-        delete _current;
-        delete _backup;
-    }
+    reload_mgr(std::unique_ptr<T> current, std::unique_ptr<T> backup) 
+        : _current(std::move(current)), _backup(std::move(backup)) {}
     
     T* current() {
         std::lock_guard<std::mutex> lock(_mutex);
-        return _current;
+        return _current.get();
     }
     
     int reload() {
@@ -81,16 +76,16 @@ private:
 
 public:
     uint32_t file_max_size;
-    string log_path;
-    string prefix_file_name;
+    std::string log_path;
+    std::string prefix_file_name;
     LogType type;
     LogModel model;
-    string _dumppath;
-    string _log_name[LOGTYPESIZE];
+    std::string _dumppath;
+    std::string _log_name[LOGTYPESIZE];
 
 private:
-    map<string, string> _cfg;
-    string _log_conf_filename;
+    std::map<std::string, std::string> _cfg;
+    std::string _log_conf_filename;
     time_t _last_load;
 };
 
