@@ -1,6 +1,6 @@
 #include "../include/logger_util.h"
 
-char* im_chomp(char* str, char c) {
+char* rx_im_chomp(char* str, char c) {
     if (!str) return NULL;
     
     char* end = str + strlen(str) - 1;
@@ -17,7 +17,7 @@ char* im_chomp(char* str, char c) {
     return str;
 }
 
-std::string trim(const std::string& str) {
+std::string rx_trim(const std::string& str) {
     if (str.empty()) {
         return str;
     }
@@ -34,7 +34,7 @@ std::string trim(const std::string& str) {
     return str.substr(start, end - start + 1);
 }
 
-void get_proc_name(char* name, size_t size) {
+void rx_get_proc_name(char* name, size_t size) {
     if (!name || size == 0) return;
     
     // Linux implementation: get process name from /proc/self/comm
@@ -56,7 +56,7 @@ void get_proc_name(char* name, size_t size) {
     }
 }
 
-void get_timestr(char* buf, size_t size, const char* format) {
+void rx_get_timestr(char* buf, size_t size, const char* format) {
     if (!buf || size == 0 || !format) return;
     
     time_t now = time(NULL);
@@ -64,7 +64,7 @@ void get_timestr(char* buf, size_t size, const char* format) {
     strftime(buf, size, format, timeinfo);
 }
 
-void get_timestr_millSecond(char* buf, size_t size, const char* format) {
+void rx_get_timestr_millSecond(char* buf, size_t size, const char* format) {
     if (!buf || size == 0 || !format) return;
     
     struct timeval tv;
@@ -79,11 +79,11 @@ void get_timestr_millSecond(char* buf, size_t size, const char* format) {
     }
 }
 
-std::string strError(int error_code) {
+std::string rx_strError(int error_code) {
     return std::string(strerror(error_code));
 }
 
-uint64_t get_thread_id() {
+uint64_t rx_get_thread_id() {
     auto id = std::this_thread::get_id();
     std::stringstream ss;
     ss << id;
@@ -97,7 +97,7 @@ uint64_t get_thread_id() {
     return thread_id;
 }
 
-void SplitString(const std::string& str, const std::string& delimiter, std::vector<std::string>* result, int mode) {
+void rx_SplitString(const std::string& str, const std::string& delimiter, std::vector<std::string>* result, int mode) {
     if (!result) return;
     
     result->clear();
@@ -113,18 +113,18 @@ void SplitString(const std::string& str, const std::string& delimiter, std::vect
     while ((found = str.find(delimiter, start)) != std::string::npos) {
         std::string token = str.substr(start, found - start);
         
-        if (mode & SPLIT_MODE_TRIM) {
-            token = trim(token);
+        if (mode & RX_SPLIT_MODE_TRIM) {
+            token = rx_trim(token);
         }
         result->push_back(token);
         
         start = found + delimiter.length();
         
-        if (mode & SPLIT_MODE_ONE) {
+        if (mode & RX_SPLIT_MODE_ONE) {
             // Only split once
             std::string remaining = str.substr(start);
-            if (mode & SPLIT_MODE_TRIM) {
-                remaining = trim(remaining);
+            if (mode & RX_SPLIT_MODE_TRIM) {
+                remaining = rx_trim(remaining);
             }
             result->push_back(remaining);
             break;
@@ -133,8 +133,8 @@ void SplitString(const std::string& str, const std::string& delimiter, std::vect
     
     if (start < str.length()) {
         std::string token = str.substr(start);
-        if (mode & SPLIT_MODE_TRIM) {
-            token = trim(token);
+        if (mode & RX_SPLIT_MODE_TRIM) {
+            token = rx_trim(token);
         }
         result->push_back(token);
     }

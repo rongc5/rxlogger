@@ -34,7 +34,7 @@ log_thread::~log_thread() {
 }
 
 void log_thread::init(const char* path) {
-    log_thread* thread = base_singleton<log_thread>::get_instance();
+    log_thread* thread = rx_base_singleton<log_thread>::get_instance();
     thread->log_thread_init(path);
     thread->start();
 }
@@ -100,8 +100,8 @@ void log_thread::check_to_renmae(const char* filename, int max_size) {
         return;
     }
 
-    char tmp[SIZE_LEN_64];
-    char path[SIZE_LEN_128];
+    char tmp[RX_SIZE_LEN_64];
+    char path[RX_SIZE_LEN_128];
     struct stat statBuf;
     
     if (stat(filename, &statBuf) != 0) {
@@ -109,7 +109,7 @@ void log_thread::check_to_renmae(const char* filename, int max_size) {
     }
 
     if (max_size && statBuf.st_size >= max_size) {
-        get_timestr(tmp, sizeof(tmp), "%Y%m%d%H%M%S");
+        rx_get_timestr(tmp, sizeof(tmp), "%Y%m%d%H%M%S");
         snprintf(path, sizeof(path), "%s.%s", filename, tmp);
         rename(filename, path);
     }
@@ -128,10 +128,10 @@ void log_thread::log_thread_init(const char* path) {
 
     _epoll_fd = epoll_create(DAFAULT_EPOLL_SIZE);
     if (_epoll_fd == -1) {       
-        THROW_COMMON_EXCEPT("epoll_create fail " << strError(errno).c_str());
+        RX_THROW_COMMON_EXCEPT("epoll_create fail " << rx_strError(errno).c_str());
     }
 
-    _epoll_size = SIZE_LEN_16;
+    _epoll_size = RX_SIZE_LEN_16;
     _epoll_events = new epoll_event[_epoll_size];
 
     int fd[2];
@@ -149,13 +149,13 @@ void log_thread::log_thread_init(const char* path) {
     tmpEvent.data.fd = fd[0];
     ret = epoll_ctl(_epoll_fd, EPOLL_CTL_ADD, fd[0], &tmpEvent);
     if (ret != 0) {
-        THROW_COMMON_EXCEPT("add to epoll fail " << strError(errno).c_str());
+        RX_THROW_COMMON_EXCEPT("add to epoll fail " << rx_strError(errno).c_str());
     }
 
     fcntl(_channelid, F_SETFL, O_NONBLOCK);
     
-    char tmp_buff[SIZE_LEN_128];
-    get_proc_name(tmp_buff, sizeof(tmp_buff));
+    char tmp_buff[RX_SIZE_LEN_128];
+    rx_get_proc_name(tmp_buff, sizeof(tmp_buff));
     _proc_name.append(tmp_buff);
     
     // Notify that initialization is complete
@@ -173,7 +173,7 @@ void log_thread::log_conf_init() {
 
     log_conf* conf = _rlog_conf->current();
     if (conf && !conf->log_path.empty()) {
-        char buf[SIZE_LEN_512];
+        char buf[RX_SIZE_LEN_512];
         snprintf(buf, sizeof(buf), "mkdir -p %s", conf->log_path.c_str());
         system(buf);         
     }
@@ -190,10 +190,12 @@ int log_thread::RECV(int fd, void* buf, size_t len) {
     int ret = recv(fd, buf, len, MSG_DONTWAIT);
 
     if (ret == 0) {
-        THROW_COMMON_EXCEPT("the client close the socket(" << fd << ")");
+        // Peer closed; treat as no data and continue loop
+        return 0;
     } else if (ret < 0) {
-        if (errno != EAGAIN) {
-            THROW_COMMON_EXCEPT("this socket occur fatal error " << strError(errno).c_str());
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
+            // Non-transient error; skip this round instead of throwing
+            return 0;
         }
         ret = 0;
     }
@@ -232,7 +234,7 @@ void log_thread::obj_process() {
         return;
     }
 
-    char buf[SIZE_LEN_2048];
+    char buf[RX_SIZE_LEN_2048];
     ssize_t ret = 0;
     
     for (int i = 0; i < nfds; i++) {

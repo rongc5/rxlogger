@@ -130,14 +130,14 @@ private:
 // Template method implementations
 template<typename... Args>
 void log_thread::log_write_safe(LogType type, const Args&... args) {
-    log_thread* thread = base_singleton<log_thread>::get_instance();
+    log_thread* thread = rx_base_singleton<log_thread>::get_instance();
     if (!thread || !thread->check_type(type)) {
         return;
     }
     
     std::stringstream ss;
-    char log_common_tmp[SIZE_LEN_64];
-    get_timestr_millSecond(log_common_tmp, sizeof(log_common_tmp), LOG_DATE_FORMAT);
+    char log_common_tmp[RX_SIZE_LEN_64];
+    rx_get_timestr_millSecond(log_common_tmp, sizeof(log_common_tmp), LOG_DATE_FORMAT);
     
     ss << "[" << thread->_proc_name << "]:[" << log_common_tmp << "] ";
     
@@ -154,7 +154,7 @@ void log_thread::log_write_safe(LogType type, const Args&... args) {
 
 template<typename... Args>
 void log_thread::log_write_safe(const char* filename, const Args&... args) {
-    log_thread* thread = base_singleton<log_thread>::get_instance();
+    log_thread* thread = rx_base_singleton<log_thread>::get_instance();
     if (!thread) {
         return;
     }

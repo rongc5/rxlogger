@@ -26,12 +26,12 @@ int log_conf::load() {
             line = line.substr(0, comment_pos);
         }
         
-        line = trim(line);
+        line = rx_trim(line);
         if (line.empty()) {
             continue;
         }
 
-        SplitString(line, "=", &tmp_vec, SPLIT_MODE_ONE | SPLIT_MODE_TRIM);
+        rx_SplitString(line, "=", &tmp_vec, RX_SPLIT_MODE_ONE | RX_SPLIT_MODE_TRIM);
         if (tmp_vec.size() != 2) {
             continue;
         }
@@ -81,8 +81,8 @@ void log_conf::get_file_name(LogType type) {
 }
 
 void log_conf::do_parse() {
-    char buf[SIZE_LEN_1024];
-    get_proc_name(buf, sizeof(buf));
+    char buf[RX_SIZE_LEN_1024];
+    rx_get_proc_name(buf, sizeof(buf));
     prefix_file_name.assign(buf);
 
     file_max_size = DEFAULT_LOG_MAX_SIZE;
@@ -91,7 +91,7 @@ void log_conf::do_parse() {
     model = LOGTHREAD;
     _dumppath.assign("log_conf_dump");
 
-    if (has_key<std::string, std::string>(_cfg, "file_max_size")) {    
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("file_max_size"))) {    
         try {
             file_max_size = std::stoi(_cfg["file_max_size"]);
         } catch (const std::exception& e) {
@@ -100,15 +100,15 @@ void log_conf::do_parse() {
         }
     } 
 
-    if (has_key<std::string, std::string>(_cfg, "log_path")) {
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("log_path"))) {
         log_path = _cfg["log_path"];
     }
 
-    if (has_key<std::string, std::string>(_cfg, "prefix_file_name")) {
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("prefix_file_name"))) {
         prefix_file_name = _cfg["prefix_file_name"];
     }
 
-    if (has_key<std::string, std::string>(_cfg, "type")) {    
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("type"))) {    
         try {
             type = (LogType)std::stoi(_cfg["type"]);
         } catch (const std::exception& e) {
@@ -117,7 +117,7 @@ void log_conf::do_parse() {
         }
     } 
 
-    if (has_key<std::string, std::string>(_cfg, "model")) {    
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("model"))) {    
         try {
             model = (LogModel)std::stoi(_cfg["model"]);
         } catch (const std::exception& e) {
@@ -126,7 +126,7 @@ void log_conf::do_parse() {
         }
     } 
 
-    if (has_key<std::string, std::string>(_cfg, "dumppath")) {
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("dumppath"))) {
         _dumppath = _cfg["dumppath"];
     }
     

@@ -33,10 +33,10 @@
 #define FILE_WRITE_SAFE(filename, ...) log_thread::log_write_safe(filename, __VA_ARGS__)
 
 // Convenient type-safe logging macros
-#define LOG_WARNING_SAFE(...) LOG_WRITE_SAFE(LOGTYPEWARNING, "WARNING:[", get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
-#define LOG_FATAL_SAFE(...) LOG_WRITE_SAFE(LOGTYPEFATAL, "FATAL:[", get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
-#define LOG_NOTICE_SAFE(...) LOG_WRITE_SAFE(LOGTYPENOTICE, "NOTICE:[", get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
-#define LOG_TRACE_SAFE(...) LOG_WRITE_SAFE(LOGTYPETRACE, "TRACE:[", get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
-#define LOG_DEBUG_SAFE(...) LOG_WRITE_SAFE(LOGTYPEDEBUG, "DEBUG:[", get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
+#define LOG_WARNING_SAFE(...) LOG_WRITE_SAFE(LOGTYPEWARNING, "WARNING:[", rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
+#define LOG_FATAL_SAFE(...) LOG_WRITE_SAFE(LOGTYPEFATAL, "FATAL:[", rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
+#define LOG_NOTICE_SAFE(...) LOG_WRITE_SAFE(LOGTYPENOTICE, "NOTICE:[", rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
+#define LOG_TRACE_SAFE(...) LOG_WRITE_SAFE(LOGTYPETRACE, "TRACE:[", rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
+#define LOG_DEBUG_SAFE(...) LOG_WRITE_SAFE(LOGTYPEDEBUG, "DEBUG:[", rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", __FILE__, "] ", __VA_ARGS__)
 
 #endif 

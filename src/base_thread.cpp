@@ -15,6 +15,8 @@ base_thread::base_thread() : _run_flag(false) {
 
 base_thread::~base_thread() {
     stop();
+    // Ensure thread is joined to avoid std::terminate at program exit
+    join();
     
     std::lock_guard<std::mutex> lock(_threads_mutex);
     auto it = std::find(_all_threads.begin(), _all_threads.end(), this);
@@ -33,7 +35,7 @@ void base_thread::start() {
             });
         } catch (const std::exception& e) {
             _run_flag = false;
-            THROW_COMMON_EXCEPT("std::thread creation failed: " << e.what());
+            RX_THROW_COMMON_EXCEPT("std::thread creation failed: " << e.what());
         }
     }
 }

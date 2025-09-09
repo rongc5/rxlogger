@@ -40,21 +40,21 @@
 #include <inttypes.h>
 
 
-// Size constants
-static const uint32_t SIZE_LEN_4 = 4; 
-static const uint32_t SIZE_LEN_6 = 6; 
-static const uint32_t SIZE_LEN_8 = 8; 
-static const uint32_t SIZE_LEN_10 = 10; 
-static const uint32_t SIZE_LEN_12 = 12; 
-static const uint32_t SIZE_LEN_16 = 16; 
-static const uint32_t SIZE_LEN_32 = 32; 
-static const uint32_t SIZE_LEN_64 = 64; 
-static const uint32_t SIZE_LEN_128 = 128; 
-static const uint32_t SIZE_LEN_256 = 256;
-static const uint32_t SIZE_LEN_512 = 512;
-static const uint32_t SIZE_LEN_1024 = 1024;
-static const uint32_t SIZE_LEN_2048 = 2048;
-static const uint32_t SIZE_LEN_4096 = 4096;
+// Size constants (prefixed to avoid collision)
+static const uint32_t RX_SIZE_LEN_4 = 4; 
+static const uint32_t RX_SIZE_LEN_6 = 6; 
+static const uint32_t RX_SIZE_LEN_8 = 8; 
+static const uint32_t RX_SIZE_LEN_10 = 10; 
+static const uint32_t RX_SIZE_LEN_12 = 12; 
+static const uint32_t RX_SIZE_LEN_16 = 16; 
+static const uint32_t RX_SIZE_LEN_32 = 32; 
+static const uint32_t RX_SIZE_LEN_64 = 64; 
+static const uint32_t RX_SIZE_LEN_128 = 128; 
+static const uint32_t RX_SIZE_LEN_256 = 256;
+static const uint32_t RX_SIZE_LEN_512 = 512;
+static const uint32_t RX_SIZE_LEN_1024 = 1024;
+static const uint32_t RX_SIZE_LEN_2048 = 2048;
+static const uint32_t RX_SIZE_LEN_4096 = 4096;
 
 // Log specific constants
 #define LOG_DATE_FORMAT "%Y-%m-%d %H:%M:%S"
@@ -77,16 +77,18 @@ typedef unsigned short uint16_t;
 typedef int int32_t;
 typedef unsigned int uint32_t;
 
-// Split modes
-#define SPLIT_MODE_ONE 1
-#define SPLIT_MODE_TRIM 2
+// Split modes (prefixed)
+#define RX_SPLIT_MODE_ONE 1
+#define RX_SPLIT_MODE_TRIM 2
 
-// Assert macros
+// Assert macros (guard redefinition)
+#ifndef ASSERT_WARNING
 #define ASSERT_WARNING(condition, fmt, ...) \
     do { \
         if (!(condition)) { \
             fprintf(stderr, "ASSERT WARNING: " fmt "\n", ##__VA_ARGS__); \
         } \
     } while(0)
+#endif
 
 #endif 

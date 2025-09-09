@@ -30,8 +30,9 @@ protected:
 };
 
 // Singleton pattern template (Meyers' Singleton - C++11 thread-safe)
+// Renamed to avoid collision with other frameworks
 template<typename T>
-class base_singleton {
+class rx_base_singleton {
 public:
     static T* get_instance() {
         static T instance;
@@ -39,12 +40,12 @@ public:
     }
     
     // Delete copy constructor and assignment operator
-    base_singleton(const base_singleton&) = delete;
-    base_singleton& operator=(const base_singleton&) = delete;
+    rx_base_singleton(const rx_base_singleton&) = delete;
+    rx_base_singleton& operator=(const rx_base_singleton&) = delete;
     
 protected:
-    base_singleton() = default;
-    ~base_singleton() = default;
+    rx_base_singleton() = default;
+    ~rx_base_singleton() = default;
 };
 
 #endif 
