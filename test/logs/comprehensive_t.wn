@@ -1,0 +1,2 @@
+[log_id:1003][comprehensive_t]:[2025-09-11 03:27:56.444] WARNING:[248011930558784]:[47:test_basic_logging:comprehensive_test.cpp] 测试WARNING日志，错误码: -1
+[log_id:1008][comprehensive_t]:[2025-09-11 03:27:57.444] WARNING:[248011930558784]:[73:test_stream_logging:comprehensive_test.cpp]流式WARNING日志: 1

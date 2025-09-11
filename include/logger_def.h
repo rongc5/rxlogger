@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <libgen.h>
+#include <stdint.h>
 
 #include <vector>
 #include <string>
@@ -69,13 +70,7 @@ static const uint32_t RX_SIZE_LEN_4096 = 4096;
 #define MSG_DONTWAIT 0x40
 #endif
 
-// Type definitions
-typedef signed char  int8_t;
-typedef unsigned char  uint8_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef int int32_t;
-typedef unsigned int uint32_t;
+// Standard fixed-width integer types are provided by <stdint.h>
 
 // Split modes (prefixed)
 #define RX_SPLIT_MODE_ONE 1

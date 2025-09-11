@@ -5,6 +5,7 @@
 #include "logger_def.h"
 #include "base_thread.h"
 
+#ifndef RXLOGGER_NO_MACROS
 #define LOG_INIT(log_path) \
     do { \
         log_thread::init(log_path); \
@@ -36,10 +37,10 @@
 #define FILE_WRITE(filename, ...) FILE_WRITEF(filename, __VA_ARGS__)
 
 #define LOGWARNING log_stream(LOGTYPEWARNING, __LINE__, __func__, __FILE__)
-#define LOGFATAL log_stream(LOGTYPEFATAL, __LINE__, __func__, __FILE__) 
-#define LOGNOTICE log_stream(LOGTYPENOTICE, __LINE__, __func__, __FILE__)
-#define LOGTRACE log_stream(LOGTYPETRACE, __LINE__, __func__, __FILE__)
-#define LOGDEBUG log_stream(LOGTYPEDEBUG, __LINE__, __func__, __FILE__)
+#define LOGFATAL   log_stream(LOGTYPEFATAL,   __LINE__, __func__, __FILE__) 
+#define LOGNOTICE  log_stream(LOGTYPENOTICE,  __LINE__, __func__, __FILE__)
+#define LOGTRACE   log_stream(LOGTYPETRACE,   __LINE__, __func__, __FILE__)
+#define LOGDEBUG   log_stream(LOGTYPEDEBUG,   __LINE__, __func__, __FILE__)
 
 // Type-safe variadic template macros (C++11)
 #define LOG_WRITE_SAFE(type, ...) log_thread::log_write_safe(type, __VA_ARGS__)
@@ -51,5 +52,7 @@
 #define LOG_NOTICE_SAFE(...)  LOG_WRITE_SAFE(LOGTYPENOTICE,  "NOTICE:[",  rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", rx_basename(__FILE__), "] ", __VA_ARGS__)
 #define LOG_TRACE_SAFE(...)   LOG_WRITE_SAFE(LOGTYPETRACE,   "TRACE:[",   rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", rx_basename(__FILE__), "] ", __VA_ARGS__)
 #define LOG_DEBUG_SAFE(...)   LOG_WRITE_SAFE(LOGTYPEDEBUG,   "DEBUG:[",   rx_get_thread_id(), "]:[", __LINE__, ":", __func__, ":", rx_basename(__FILE__), "] ", __VA_ARGS__)
+
+#endif /* RXLOGGER_NO_MACROS */
 
 #endif 
