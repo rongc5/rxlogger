@@ -31,37 +31,76 @@ public:
     virtual int destroy() = 0;
 };
 
-// Reload manager template
+// Reload manager template - matches original myframe core implementation
 template<typename T>
 class reload_mgr {
 private:
-    std::unique_ptr<T> _current;
-    std::unique_ptr<T> _backup;
-    std::mutex _mutex;
+    T* _objects[2];
+    int16_t _curr;
 
 public:
-    reload_mgr(std::unique_ptr<T> current, std::unique_ptr<T> backup) 
-        : _current(std::move(current)), _backup(std::move(backup)) {}
+    reload_mgr(T* T1, T* T2) {
+        _objects[0] = T1;
+        _objects[1] = T2;
+        _curr = 0;
+    }
     
-    T* current() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _current.get();
+    ~reload_mgr() {
+        if (_objects[0]) {
+            _objects[0]->destroy();
+            delete _objects[0];
+            _objects[0] = NULL;
+        }
+        if (_objects[1]) {
+            _objects[1]->destroy();
+            delete _objects[1];
+            _objects[1] = NULL;
+        }
+    }
+    
+    int load() {
+        if (_objects[_curr]->load() == 0) {
+            return 0;
+        }
+        return -1;
     }
     
     bool need_reload() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _current && _current->need_reload();
+        return current()->need_reload();
     }
     
     int reload() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        if (_backup && _backup->need_reload()) {
-            int ret = _backup->reload();
-            if (ret == 0) {
-                std::swap(_current, _backup);
-            }
-            return ret;
+        int16_t idle_idx = (_curr == 0) ? 1 : 0;
+        if (_objects[idle_idx]->reload() == 0) {
+            _curr = idle_idx;
+            return 0;
         }
+        return -1;
+    }
+    
+    T* current() {
+        if (_curr == 0 || _curr == 1) {
+            return _objects[_curr];
+        }
+        return NULL;
+    }
+    
+    T* idle() {
+        int16_t idle_idx = (_curr == 0) ? 1 : 0;
+        if (idle_idx == 0 || idle_idx == 1) {
+            return _objects[idle_idx];
+        }
+        return NULL;
+    }
+    
+    int dump() {
+        T* obj = current();
+        return obj ? obj->dump() : -1;
+    }
+    
+    int destroy() {
+        if (_objects[0]) _objects[0]->destroy();
+        if (_objects[1]) _objects[1]->destroy();
         return 0;
     }
 };

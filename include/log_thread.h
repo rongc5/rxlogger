@@ -70,7 +70,7 @@ private:
     uint32_t _epoll_size;
     std::string _recv_buf;
     volatile int _current;
-    std::unique_ptr<reload_mgr<log_conf>> _rlog_conf; 
+    reload_mgr<log_conf>* _rlog_conf; 
     static uint64_t log_global_id;
     static std::mutex _init_mutex;
     static std::condition_variable _init_cv;

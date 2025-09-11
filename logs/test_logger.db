@@ -2,3 +2,31 @@
 [log_id:1001][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
 [log_id:1000][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
 [log_id:1001][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:03:42.902] DEBUG:[255558228648256]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:03:42.902] DEBUG:[255558228648256]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:03:42.902] DEBUG:[255558228648256]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:03:42.902] DEBUG:[255558228648256]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:05:04.689] DEBUG:[258846809944384]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:05:04.689] DEBUG:[258846809944384]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:05:04.689] DEBUG:[258846809944384]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:05:04.689] DEBUG:[258846809944384]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:05:11.155] DEBUG:[250324991410496]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:05:11.155] DEBUG:[250324991410496]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:05:11.155] DEBUG:[250324991410496]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:05:11.155] DEBUG:[250324991410496]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:05:19.075] DEBUG:[277125970268480]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:05:19.075] DEBUG:[277125970268480]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:05:19.075] DEBUG:[277125970268480]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:05:19.075] DEBUG:[277125970268480]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:07:23.349] DEBUG:[255493023068480]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:07:23.349] DEBUG:[255493023068480]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:07:23.349] DEBUG:[255493023068480]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:07:23.349] DEBUG:[255493023068480]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:09:20.838] DEBUG:[275812185604416]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:09:20.839] DEBUG:[275812185604416]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:09:20.838] DEBUG:[275812185604416]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:09:20.839] DEBUG:[275812185604416]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:10:45.802] DEBUG:[261743921717568]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:10:45.802] DEBUG:[261743921717568]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:10:45.802] DEBUG:[261743921717568]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:10:45.802] DEBUG:[261743921717568]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试

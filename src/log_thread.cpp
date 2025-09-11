@@ -28,6 +28,10 @@ log_thread::~log_thread() {
         close(_channelid);
     }
     
+    if (_rlog_conf) {
+        delete _rlog_conf;
+        _rlog_conf = NULL;
+    }
 
     _queue[_current].clear();
     _queue[1- _current].clear();
@@ -123,10 +127,10 @@ void log_thread::log_thread_init(const char* path) {
         return;
     }
 
-    _rlog_conf.reset(new reload_mgr<log_conf>(
-        std::unique_ptr<log_conf>(new log_conf(path)), 
-        std::unique_ptr<log_conf>(new log_conf(path))
-    ));
+    _rlog_conf = new reload_mgr<log_conf>(
+        new log_conf(path), 
+        new log_conf(path)
+    );
     log_conf_init();
 
     _epoll_fd = epoll_create(DAFAULT_EPOLL_SIZE);
