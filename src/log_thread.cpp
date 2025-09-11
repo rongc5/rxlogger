@@ -217,15 +217,13 @@ size_t log_thread::process_recv_buf(const char* buf, const size_t len) {
 
     {
         std::lock_guard<std::mutex> lck(_mutex);
-        std::deque<std::shared_ptr<log_msg>>& queue = _queue[_current];
-        
-        if (queue.empty()) {
+        // If current queue is empty, flip to the other queue
+        if (_queue[_current].empty()) {
             _current = 1 - _current;
-            queue = _queue[_current];
         }
-        
-        // Swap the queue with empty processing_queue - O(1) operation
-        processing_queue.swap(queue);
+
+        // Swap the selected queue with the local processing queue (O(1))
+        processing_queue.swap(_queue[_current]);
     } // Lock is released here
 
     // Process all messages without holding the lock

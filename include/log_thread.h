@@ -80,21 +80,30 @@ private:
 class log_stream {
 public:
     log_stream(LogType type, int line, std::string func, std::string file) {
+        const char* fname_c = file.c_str();
+        const char* slash1 = strrchr(fname_c, '/');
+#ifdef _WIN32
+        const char* slash2 = strrchr(fname_c, '\\');
+        const char* slash = slash1 > slash2 ? slash1 : slash2;
+#else
+        const char* slash = slash1;
+#endif
+        const char* base = slash ? slash + 1 : fname_c;
         switch (type) {
             case LOGTYPEDEBUG:
-                ss << "DEBUG:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "DEBUG:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< base << "]";
                 break;
             case LOGTYPETRACE:
-                ss << "TRACE:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "TRACE:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< base << "]";
                 break;
             case LOGTYPENOTICE:
-                ss << "NOTICE:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "NOTICE:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< base << "]";
                 break;
             case LOGTYPEFATAL:
-                ss << "FATAL:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "FATAL:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< base << "]";
                 break;
             case LOGTYPEWARNING:
-                ss << "WARNING:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< file << "]";
+                ss << "WARNING:[" << std::this_thread::get_id() << "]:[" << line <<":" << func <<":"<< base << "]";
                 break;
             default:
                 break;

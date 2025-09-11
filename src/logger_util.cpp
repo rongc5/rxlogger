@@ -1,4 +1,48 @@
 #include "../include/logger_util.h"
+ 
+static std::string rx_vformat_impl(const char* fmt, va_list ap) {
+    if (!fmt) return std::string();
+    // Try with a stack buffer first
+    char local[512];
+    va_list ap_copy;
+    va_copy(ap_copy, ap);
+    int n = vsnprintf(local, sizeof(local), fmt, ap_copy);
+    va_end(ap_copy);
+    if (n < 0) {
+        return std::string();
+    }
+    if (static_cast<size_t>(n) < sizeof(local)) {
+        return std::string(local, local + n);
+    }
+    // Need a bigger buffer
+    std::string result;
+    result.resize(n);
+    vsnprintf(&result[0], result.size() + 1, fmt, ap);
+    return result;
+}
+
+std::string rx_vformat(const char* fmt, va_list ap) {
+    return rx_vformat_impl(fmt, ap);
+}
+
+std::string rx_format(const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    std::string s = rx_vformat_impl(fmt, ap);
+    va_end(ap);
+    return s;
+}
+
+std::string rx_normalize_log_filename(const char* filename) {
+    if (!filename || !*filename) {
+        return std::string("logs/unnamed.log");
+    }
+    std::string fn(filename);
+    if (fn.find('/') != std::string::npos) {
+        return fn; // already has a path
+    }
+    return std::string("logs/") + fn;
+}
 
 char* rx_im_chomp(char* str, char c) {
     if (!str) return NULL;
@@ -121,12 +165,13 @@ void rx_SplitString(const std::string& str, const std::string& delimiter, std::v
         start = found + delimiter.length();
         
         if (mode & RX_SPLIT_MODE_ONE) {
-            // Only split once
+            // Only split once: push the remaining and stop without adding another trailing token
             std::string remaining = str.substr(start);
             if (mode & RX_SPLIT_MODE_TRIM) {
                 remaining = rx_trim(remaining);
             }
             result->push_back(remaining);
+            start = str.length();
             break;
         }
     }

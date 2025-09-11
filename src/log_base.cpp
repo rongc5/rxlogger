@@ -133,9 +133,7 @@ void log_conf::do_parse() {
     }
     
     if (!prefix_file_name.empty() && !log_path.empty()) {
-        int i = LOGTYPEFATAL;
-        int j = 1;
-        for (; i < LOGTYPESIZE; j++, i = 1 << j) {
+        for (int i = LOGTYPEFATAL; i < LOGTYPESIZE; i <<= 1) {
             get_file_name((LogType)i);
         }
     }
