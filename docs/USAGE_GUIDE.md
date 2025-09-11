@@ -423,3 +423,7 @@ if (thread) {
 - 审计日志记录
 
 这个日志库经过全面测试，性能表现优秀，适合在生产环境中使用。建议在性能要求较高的场景下使用异步模式，在调试阶段使用完整的日志级别。 
+
+# Benchmark
+
+For performance benchmarking, see `docs/BENCHMARK.md`.

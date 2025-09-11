@@ -172,3 +172,17 @@ FILE_WRITE("custom.log", "自定义文件日志: %s", "内容");
 - 性能测试表现优秀（31万条/秒）
 - 支持配置热重载
 - 多线程安全 
+
+## Benchmark
+
+Quick start for performance benchmarking:
+
+```
+# Build all targets via CMake
+./scripts/build_cmake.sh
+
+# Run benchmark: [total_logs] [threads]
+./scripts/run_bench.sh 10000 4
+```
+
+See detailed scenarios, parameters and metrics in `docs/BENCHMARK.md`.
