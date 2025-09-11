@@ -1,5 +1,7 @@
 #include "../include/log_base.h"
 
+namespace rxlogger {
+
 log_conf::log_conf(const char* sk_conf) {
     _log_conf_filename.append(sk_conf);  
     _last_load = 0;
@@ -177,3 +179,5 @@ int log_conf::destroy() {
     prefix_file_name.clear();
     return 0;
 } 
+
+} // namespace rxlogger

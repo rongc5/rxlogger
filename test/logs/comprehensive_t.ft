@@ -1,2 +1,2 @@
-[log_id:1004][comprehensive_t]:[2025-09-11 03:27:56.444] FATAL:[248011930558784]:[48:test_basic_logging:comprehensive_test.cpp] 测试FATAL日志
-[log_id:1009][comprehensive_t]:[2025-09-11 03:27:57.444] FATAL:[248011930558784]:[74:test_stream_logging:comprehensive_test.cpp]流式FATAL日志: 结束
+[log_id:1004][comprehensive_t]:[2025-09-11 03:39:21.066] FATAL:[263295845253440]:[48:test_basic_logging:comprehensive_test.cpp] 测试FATAL日志
+[log_id:1009][comprehensive_t]:[2025-09-11 03:39:22.067] FATAL:[263295845253440]:[74:test_stream_logging:comprehensive_test.cpp]流式FATAL日志: 结束

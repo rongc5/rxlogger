@@ -3,6 +3,8 @@
 
 #include "logger_def.h"
 
+namespace rxlogger {
+
 // Base thread class for rxlogger
 class rx_base_thread {
 public:
@@ -47,5 +49,7 @@ protected:
     rx_base_singleton() = default;
     ~rx_base_singleton() = default;
 };
+
+} // namespace rxlogger
 
 #endif 

@@ -3,6 +3,8 @@
 
 #include "logger_def.h"
 
+namespace rxlogger {
+
 // Utility functions (prefixed to avoid collision)
 char* rx_im_chomp(char* str, char c = '\n');
 std::string rx_trim(const std::string& str);
@@ -40,6 +42,8 @@ template<typename K, typename V>
 inline bool rx_has_key(const std::map<K, V>& m, const K& key) {
     return m.find(key) != m.end();
 }
+
+} // namespace rxlogger
 
 // Exception utilities
 #define RX_THROW_COMMON_EXCEPT(msg) \

@@ -4,6 +4,7 @@
 #include "logger_def.h"
 #include "logger_util.h"
 
+namespace rxlogger {
 
 enum LogType {
     LOGTYPEFATAL = 1,
@@ -132,5 +133,7 @@ private:
     std::string _log_conf_filename;
     time_t _last_load;
 };
+
+} // namespace rxlogger
 
 #endif 

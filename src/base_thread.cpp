@@ -5,6 +5,8 @@
 #include "../include/base_thread.h"
 #include "../include/logger_util.h"
 
+namespace rxlogger {
+
 std::vector<rx_base_thread*> rx_base_thread::_all_threads;
 std::mutex rx_base_thread::_threads_mutex;
 
@@ -59,3 +61,5 @@ void rx_base_thread::join_all_thread() {
         }
     }
 } 
+
+} // namespace rxlogger

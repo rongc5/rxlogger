@@ -1,6 +1,8 @@
 #include "../include/log_thread.h"
 #include "../include/base_thread.h"
 
+namespace rxlogger {
+
 uint64_t log_thread::log_global_id = 0;
 std::mutex log_thread::_init_mutex;
 std::condition_variable log_thread::_init_cv;
@@ -263,3 +265,5 @@ uint64_t log_thread::get_logid() {
     }
     return log_global_id++;
 } 
+
+} // namespace rxlogger

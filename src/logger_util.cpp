@@ -1,4 +1,6 @@
 #include "../include/logger_util.h"
+
+namespace rxlogger {
  
 static std::string rx_vformat_impl(const char* fmt, va_list ap) {
     if (!fmt) return std::string();
@@ -184,3 +186,5 @@ void rx_SplitString(const std::string& str, const std::string& delimiter, std::v
         result->push_back(token);
     }
 } 
+
+} // namespace rxlogger

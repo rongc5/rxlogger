@@ -4,6 +4,8 @@
 #include "base_thread.h"
 #include "log_base.h"
 
+namespace rxlogger {
+
 class log_thread;
 
 // Helper for C++11 variadic template recursion
@@ -178,5 +180,7 @@ void log_thread::log_write_safe(const char* filename, const Args&... args) {
     lmsg->_fname.append(filename);
     thread->put_msg(lmsg);
 }
+
+} // namespace rxlogger
 
 #endif 
