@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/uio.h>
 #include <unistd.h>
 #include <libgen.h>
 #include <stdint.h>

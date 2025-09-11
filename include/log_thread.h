@@ -3,6 +3,9 @@
 
 #include "base_thread.h"
 #include "log_base.h"
+#include <unordered_map>
+#include <list>
+#include <sys/stat.h>
 
 namespace rxlogger {
 
@@ -29,6 +32,43 @@ public:
     std::string _fname;
     std::unique_ptr<std::vector<char>> _buf;
     uint64_t _logid;
+};
+
+// File handle cache manager with LRU and optional direct write
+class file_handle_cache {
+public:
+    struct file_info {
+        // When using direct write, use fd; otherwise FILE*
+        int fd;
+        FILE* fp;
+        std::string path;
+        file_info() : fd(-1), fp(nullptr) {}
+    };
+    
+    file_handle_cache();
+    ~file_handle_cache();
+    
+    // Return either FILE* or int fd depending on mode
+    FILE* get_file_handle_stdio(const std::string& path);
+    int   get_file_handle_fd(const std::string& path);
+    void close_all();
+    void close_file(const std::string& path);
+    void set_capacity(size_t cap);
+    void set_direct_write(bool v) { _direct_write = v; }
+    size_t size() const { return _file_cache.size(); }
+    
+private:
+    std::mutex _cache_mutex;
+    std::unordered_map<std::string, file_info> _file_cache;
+    // LRU order: most-recently used at front
+    std::list<std::string> _lru;
+    std::unordered_map<std::string, std::list<std::string>::iterator> _lru_pos;
+    size_t _capacity = 128; // default; overridden by config
+    bool _direct_write = true;
+    
+    void close_file_info(file_info& info);
+    void touch_lru_nolock(const std::string& path);
+    void evict_if_needed_nolock();
 };
 
 class log_thread : public rx_base_thread {
@@ -59,6 +99,7 @@ private:
     void check_to_renmae(const char* filename, int max_size);
     int RECV(int fd, void* buf, size_t len);
     size_t process_recv_buf(const char* buf, const size_t len);
+    bool should_check_rename(const std::string& path, const log_conf* conf);
 
 public:
     std::string _proc_name;
@@ -77,6 +118,14 @@ private:
     static std::mutex _init_mutex;
     static std::condition_variable _init_cv;
     static bool _init_completed;
+    
+    file_handle_cache _file_cache;
+    struct rename_state {
+        uint64_t last_check_ms;
+        uint32_t counter;
+        rename_state() : last_check_ms(0), counter(0) {}
+    };
+    std::unordered_map<std::string, rename_state> _rename_states;
 };
 
 class log_stream {

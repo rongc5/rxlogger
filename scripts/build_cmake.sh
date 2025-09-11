@@ -24,7 +24,7 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 echo "[RxLogger] Running CMake configure ..."
-cmake ..
+cmake -DRXLOGGER_GBK_SOURCE=OFF ..
 
 echo "[RxLogger] Building ..."
 make -j"$(nproc)"

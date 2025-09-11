@@ -1,72 +1,80 @@
+## Makefile (out-of-source outputs under build/make)
+
 CXX = g++
 CXXFLAGS = -std=c++11 -Wall -g -O2 -pthread
 INCLUDES = -I./include
 SRCDIR = src
 TESTDIR = test
-OBJDIR = obj
 
-# 源文件
+# Out-of-source build dirs
+BUILDDIR = build/make
+OBJDIR = $(BUILDDIR)/obj
+LIBDIR = $(BUILDDIR)/lib
+BINDIR = $(BUILDDIR)/bin
+
+# Sources/objects
 SOURCES = $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS = $(SOURCES:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-# 基本测试文件
+# Test sources for simple build (keep minimal)
 TEST_SOURCES = $(TESTDIR)/test_logger.cpp
 TEST_OBJECTS = $(TEST_SOURCES:$(TESTDIR)/%.cpp=$(OBJDIR)/%.o)
 
-# 目标
-TARGET = test_logger
-COMPREHENSIVE_TARGET = comprehensive_test
-LIBRARY = liblogger.a
+# Targets
+TARGET = $(BINDIR)/test_logger
+COMPREHENSIVE_TARGET = $(BINDIR)/comprehensive_test
+LIBRARY = $(LIBDIR)/liblogger.a
 
-.PHONY: all clean test comprehensive install
+.PHONY: all clean test comprehensive install uninstall
 
 all: $(LIBRARY) $(TARGET)
 
 comprehensive: $(LIBRARY) $(COMPREHENSIVE_TARGET)
 
-# 创建对象文件目录
+# Ensure build directories exist
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
+	mkdir -p $(LIBDIR)
+	mkdir -p $(BINDIR)
 
-# 编译源文件
+# Build object files from src
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# 编译测试文件
+# Build object files from test
 $(OBJDIR)/%.o: $(TESTDIR)/%.cpp | $(OBJDIR)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
-# 创建静态库
+# Static library
 $(LIBRARY): $(OBJECTS)
 	ar rcs $@ $^
 
-# 创建测试程序
+# Link test binaries
 $(TARGET): $(TEST_OBJECTS) $(LIBRARY)
 	$(CXX) $(CXXFLAGS) $^ -o $@ -pthread
 
-# 创建全面测试程序
 $(COMPREHENSIVE_TARGET): $(OBJDIR)/comprehensive_test.o $(LIBRARY)
 	$(CXX) $(CXXFLAGS) $^ -o $@ -pthread
 
-# 运行测试
+# Run tests
 test: $(TARGET)
-	cd $(TESTDIR) && ../$(TARGET)
+	cd $(TESTDIR) && ../$(BINDIR)/test_logger
 
-# 运行全面测试
 comprehensive-test: $(COMPREHENSIVE_TARGET)
-	cd $(TESTDIR) && ../$(COMPREHENSIVE_TARGET)
+	cd $(TESTDIR) && ../$(BINDIR)/comprehensive_test
 
-# 清理
+# Clean outputs
 clean:
-	rm -rf $(OBJDIR) $(LIBRARY) $(TARGET) $(COMPREHENSIVE_TARGET)
+	rm -rf $(BUILDDIR)
 	rm -rf $(TESTDIR)/logs $(TESTDIR)/log_conf_dump $(TESTDIR)/test_custom.log
 
-# 安装头文件到系统
+# Install headers + library
 install:
-	sudo cp -r include/. /usr/local/include/logger/
-	sudo cp $(LIBRARY) /usr/local/lib/
+	mkdir -p /usr/local/include/logger/
+	cp -r include/. /usr/local/include/logger/
+	cp $(LIBRARY) /usr/local/lib/
 
-# 卸载
 uninstall:
-	sudo rm -rf /usr/local/include/logger
-	sudo rm -f /usr/local/lib/$(LIBRARY) 
+	rm -rf /usr/local/include/logger
+	rm -f /usr/local/lib/$(notdir $(LIBRARY))
+

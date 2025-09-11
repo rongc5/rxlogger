@@ -128,6 +128,16 @@ public:
     std::string _dumppath;
     std::string _log_name[LOGTYPESIZE];
 
+    // New tunables
+    // How often to check file size for rotation by count
+    uint32_t rename_check_every;           // e.g., 64
+    // Or by time interval to clamp syscalls
+    uint32_t rename_check_interval_ms;     // e.g., 200 ms
+    // Max cached open files for FILE_WRITE(...)
+    uint32_t fd_cache_capacity;            // e.g., 128
+    // Use direct write(2) to fd instead of stdio
+    bool direct_write;
+
 private:
     std::map<std::string, std::string> _cfg;
     std::string _log_conf_filename;

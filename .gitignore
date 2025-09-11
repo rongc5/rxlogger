@@ -1,15 +1,25 @@
 # Build artifacts
 build/
 obj/
+build/make/
 
 # Libraries and executables
 *.a
 *.so
 *.o
+*.out
+*.exe
 
-# Test and example binaries
+# Test and example binaries (legacy root builds)
 test_logger
+test_both_modes
+test_fd_cache
+test_file_deletion
 example/simple_example
+
+# Logs and temp files
+logs/
+*.log
 
 # IDE-specific files
 .vscode/

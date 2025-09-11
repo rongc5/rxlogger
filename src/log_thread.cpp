@@ -3,6 +3,131 @@
 
 namespace rxlogger {
 
+// File handle cache implementation
+file_handle_cache::file_handle_cache() {}
+
+file_handle_cache::~file_handle_cache() {
+    close_all();
+}
+
+FILE* file_handle_cache::get_file_handle_stdio(const std::string& path) {
+    std::lock_guard<std::mutex> lock(_cache_mutex);
+    
+    auto it = _file_cache.find(path);
+    if (it != _file_cache.end() && it->second.fp) {
+        // update LRU
+        auto it2 = _lru_pos.find(path);
+        if (it2 != _lru_pos.end()) {
+            _lru.erase(it2->second);
+            _lru.push_front(path);
+            _lru_pos[path] = _lru.begin();
+        }
+        return it->second.fp;
+    }
+    
+    // Create new file handle
+    if (_file_cache.size() >= _capacity && !_lru.empty()) {
+        const std::string& victim = _lru.back();
+        auto vit = _file_cache.find(victim);
+        if (vit != _file_cache.end()) {
+            close_file_info(vit->second);
+            _file_cache.erase(vit);
+        }
+        _lru.pop_back();
+        _lru_pos.erase(victim);
+    }
+    FILE* fp = fopen(path.c_str(), "a");
+    if (fp) {
+        file_info& info = _file_cache[path];
+        info.fp = fp;
+        info.fd = -1;
+        info.path = path;
+        _lru.push_front(path);
+        _lru_pos[path] = _lru.begin();
+    }
+    
+    return fp;
+}
+
+void file_handle_cache::close_file_info(file_info& info) {
+    if (info.fp) { fclose(info.fp); info.fp = nullptr; }
+    if (info.fd >= 0) { ::close(info.fd); info.fd = -1; }
+}
+
+void file_handle_cache::close_all() {
+    std::lock_guard<std::mutex> lock(_cache_mutex);
+    for (auto& pair : _file_cache) {
+        close_file_info(pair.second);
+    }
+    _file_cache.clear();
+    _lru.clear();
+    _lru_pos.clear();
+}
+
+void file_handle_cache::close_file(const std::string& path) {
+    std::lock_guard<std::mutex> lock(_cache_mutex);
+    auto it = _file_cache.find(path);
+    if (it != _file_cache.end()) {
+        close_file_info(it->second);
+        _file_cache.erase(it);
+        auto it2 = _lru_pos.find(path);
+        if (it2 != _lru_pos.end()) {
+            _lru.erase(it2->second);
+            _lru_pos.erase(it2);
+        }
+    }
+}
+
+// New methods for fd mode + LRU management
+int file_handle_cache::get_file_handle_fd(const std::string& path) {
+    std::lock_guard<std::mutex> lock(_cache_mutex);
+    auto it = _file_cache.find(path);
+    if (it != _file_cache.end() && it->second.fd >= 0) {
+        auto it2 = _lru_pos.find(path);
+        if (it2 != _lru_pos.end()) {
+            _lru.erase(it2->second);
+            _lru.push_front(path);
+            _lru_pos[path] = _lru.begin();
+        }
+        return it->second.fd;
+    }
+    if (_file_cache.size() >= _capacity && !_lru.empty()) {
+        const std::string& victim = _lru.back();
+        auto vit = _file_cache.find(victim);
+        if (vit != _file_cache.end()) {
+            close_file_info(vit->second);
+            _file_cache.erase(vit);
+        }
+        _lru.pop_back();
+        _lru_pos.erase(victim);
+    }
+    int fd = ::open(path.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
+    if (fd >= 0) {
+        file_info& info = _file_cache[path];
+        info.fd = fd;
+        info.fp = nullptr;
+        info.path = path;
+        _lru.push_front(path);
+        _lru_pos[path] = _lru.begin();
+    }
+    return fd;
+}
+
+void file_handle_cache::set_capacity(size_t cap) {
+    std::lock_guard<std::mutex> lock(_cache_mutex);
+    _capacity = cap ? cap : 1;
+    while (_file_cache.size() > _capacity) {
+        const std::string& victim = _lru.back();
+        auto vit = _file_cache.find(victim);
+        if (vit != _file_cache.end()) {
+            close_file_info(vit->second);
+            _file_cache.erase(vit);
+        }
+        _lru.pop_back();
+        _lru_pos.erase(victim);
+    }
+}
+
 uint64_t log_thread::log_global_id = 0;
 std::mutex log_thread::_init_mutex;
 std::condition_variable log_thread::_init_cv;
@@ -80,28 +205,69 @@ void log_thread::put_msg(std::shared_ptr<log_msg>& p_msg) {
 }
 
 void log_thread::handle_msg(std::shared_ptr<log_msg>& p_msg) {
-    FILE* fp = NULL;
+    FILE* fp = nullptr;
+    int fd = -1;
     
     log_conf* conf = _rlog_conf->current();
 
     if (p_msg->_fname.empty() && conf) {
-        check_to_renmae(conf->_log_name[p_msg->_type].c_str(), conf->file_max_size);
-        fp = fopen(conf->_log_name[p_msg->_type].c_str(), "a");
-        if (!fp) {
-            return;
-        }   
+        const std::string& path = conf->_log_name[p_msg->_type];
+        // reduce stat cost
+        if (should_check_rename(path, conf)) {
+            check_to_renmae(path.c_str(), conf->file_max_size);
+        }
 
-        fprintf(fp, "[log_id:%" PRIu64 "]%s\n", p_msg->_logid, p_msg->_buf->data());
+        if (conf->direct_write) {
+            fd = _file_cache.get_file_handle_fd(path);
+            if (fd < 0) return;
+            const char* payload = p_msg->_buf->data();
+            char head[64];
+            int headlen = snprintf(head, sizeof(head), "[log_id:%" PRIu64 "]", p_msg->_logid);
+            struct iovec iov[3];
+            iov[0].iov_base = head; iov[0].iov_len = (size_t)headlen;
+            iov[1].iov_base = (void*)payload; iov[1].iov_len = strlen(payload);
+            char nl = '\n';
+            iov[2].iov_base = &nl; iov[2].iov_len = 1;
+            ssize_t w = writev(fd, iov, 3);
+            if (w < 0) {
+                _file_cache.close_file(path);
+                fd = _file_cache.get_file_handle_fd(path);
+                if (fd >= 0) { ssize_t w2 = writev(fd, iov, 3); (void)w2; }
+            }
+        } else {
+            fp = _file_cache.get_file_handle_stdio(path);
+            if (!fp) return;
+            if (fprintf(fp, "[log_id:%" PRIu64 "]%s\n", p_msg->_logid, p_msg->_buf->data()) < 0) {
+                _file_cache.close_file(path);
+                fp = _file_cache.get_file_handle_stdio(path);
+                if (fp) { fprintf(fp, "[log_id:%" PRIu64 "]%s\n", p_msg->_logid, p_msg->_buf->data()); }
+            }
+        }
     } else {
-        fp = fopen(p_msg->_fname.c_str(), "a");
-        if (!fp) {
-            return;
-        }   
-
-        fprintf(fp, "%s\n", p_msg->_buf->data());
+        if (conf && conf->direct_write) {
+            fd = _file_cache.get_file_handle_fd(p_msg->_fname);
+            if (fd < 0) return;
+            const char* payload = p_msg->_buf->data();
+            struct iovec iov[2];
+            iov[0].iov_base = (void*)payload; iov[0].iov_len = strlen(payload);
+            char nl = '\n';
+            iov[1].iov_base = &nl; iov[1].iov_len = 1;
+            ssize_t w = writev(fd, iov, 2);
+            if (w < 0) {
+                _file_cache.close_file(p_msg->_fname);
+                fd = _file_cache.get_file_handle_fd(p_msg->_fname);
+                if (fd >= 0) { ssize_t w2 = writev(fd, iov, 2); (void)w2; }
+            }
+        } else {
+            fp = _file_cache.get_file_handle_stdio(p_msg->_fname);
+            if (!fp) return;
+            if (fprintf(fp, "%s\n", p_msg->_buf->data()) < 0) {
+                _file_cache.close_file(p_msg->_fname);
+                fp = _file_cache.get_file_handle_stdio(p_msg->_fname);
+                if (fp) { fprintf(fp, "%s\n", p_msg->_buf->data()); }
+            }
+        }
     }
-
-    fclose(fp);
 }
 
 void log_thread::check_to_renmae(const char* filename, int max_size) {
@@ -118,10 +284,32 @@ void log_thread::check_to_renmae(const char* filename, int max_size) {
     }
 
     if (max_size && statBuf.st_size >= max_size) {
+        // Close cached file handle before renaming
+        _file_cache.close_file(filename);
+        
         rx_get_timestr(tmp, sizeof(tmp), "%Y%m%d%H%M%S");
         snprintf(path, sizeof(path), "%s.%s", filename, tmp);
         rename(filename, path);
     }
+}
+
+static inline uint64_t now_ms_local() {
+    struct timeval tv; gettimeofday(&tv, nullptr);
+    return (uint64_t)tv.tv_sec * 1000ULL + (tv.tv_usec / 1000ULL);
+}
+
+bool log_thread::should_check_rename(const std::string& path, const log_conf* conf) {
+    if (!conf) return true;
+    auto& st = _rename_states[path];
+    st.counter++;
+    uint64_t t = now_ms_local();
+    bool by_count = (conf->rename_check_every && (st.counter % conf->rename_check_every == 0));
+    bool by_time = (conf->rename_check_interval_ms && (t - st.last_check_ms >= conf->rename_check_interval_ms));
+    if (st.last_check_ms == 0 || by_count || by_time) {
+        st.last_check_ms = t;
+        return true;
+    }
+    return false;
 }
 
 void log_thread::log_thread_init(const char* path) {
@@ -179,7 +367,10 @@ void log_thread::log_conf_init() {
     if (conf && !conf->log_path.empty()) {
         char buf[RX_SIZE_LEN_512];
         snprintf(buf, sizeof(buf), "mkdir -p %s", conf->log_path.c_str());
-        system(buf);         
+        int sysrc = system(buf); (void)sysrc;
+        // Apply tunables
+        _file_cache.set_capacity(conf->fd_cache_capacity ? conf->fd_cache_capacity : 128);
+        _file_cache.set_direct_write(conf->direct_write);
     }
 }
 

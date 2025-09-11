@@ -1,15 +1,41 @@
 #include "../include/log_base.h"
+#include <sys/stat.h>
+#include <unistd.h>
+
+static std::string rx_resolve_conf_path(const std::string& path) {
+    struct stat st;
+    if (::stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+        return path;
+    }
+    // Absolute path: nothing more to try
+    if (!path.empty() && path[0] == '/') {
+        return path;
+    }
+    // Try common relative locations when running from build/bin or project root
+    const char* bases[] = { ".", "..", "../..", "test", "../test", "../../test" };
+    for (const char* b : bases) {
+        std::string candidate = std::string(b) + "/" + path;
+        if (::stat(candidate.c_str(), &st) == 0 && S_ISREG(st.st_mode)) {
+            return candidate;
+        }
+    }
+    return path;
+}
 
 namespace rxlogger {
 
 log_conf::log_conf(const char* sk_conf) {
-    _log_conf_filename.append(sk_conf);  
+    _log_conf_filename.append(sk_conf);
+    // Resolve to an existing path if possible (handles build/bin run directory)
+    _log_conf_filename = rx_resolve_conf_path(_log_conf_filename);
     _last_load = 0;
     // Initialize configuration on construction
     load();
 }
 
 int log_conf::load() {
+    // Attempt to resolve again in case working directory changed
+    _log_conf_filename = rx_resolve_conf_path(_log_conf_filename);
     std::ifstream file(_log_conf_filename);
     if (!file.is_open()) {
         ASSERT_WARNING(false, "open log conf failed. path[%s]", _log_conf_filename.c_str());
@@ -94,6 +120,11 @@ void log_conf::do_parse() {
     log_path.assign("logs");
     model = LOGTHREAD;
     _dumppath.assign("log_conf_dump");
+    // Defaults for new tunables
+    rename_check_every = 64;
+    rename_check_interval_ms = 200;
+    fd_cache_capacity = 128;
+    direct_write = true;
 
     if (rx_has_key<std::string, std::string>(_cfg, std::string("file_max_size"))) {    
         try {
@@ -132,6 +163,22 @@ void log_conf::do_parse() {
 
     if (rx_has_key<std::string, std::string>(_cfg, std::string("dumppath"))) {
         _dumppath = _cfg["dumppath"];
+    }
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("rename_check_every"))) {
+        try { rename_check_every = static_cast<uint32_t>(std::stoul(_cfg["rename_check_every"])); }
+        catch (...) { /* keep default */ }
+    }
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("rename_check_interval_ms"))) {
+        try { rename_check_interval_ms = static_cast<uint32_t>(std::stoul(_cfg["rename_check_interval_ms"])); }
+        catch (...) { /* keep default */ }
+    }
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("fd_cache_capacity"))) {
+        try { fd_cache_capacity = static_cast<uint32_t>(std::stoul(_cfg["fd_cache_capacity"])); }
+        catch (...) { /* keep default */ }
+    }
+    if (rx_has_key<std::string, std::string>(_cfg, std::string("direct_write"))) {
+        try { direct_write = (std::stoi(_cfg["direct_write"]) != 0); }
+        catch (...) { /* keep default */ }
     }
     
     if (!prefix_file_name.empty() && !log_path.empty()) {
