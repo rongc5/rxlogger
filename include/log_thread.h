@@ -29,7 +29,7 @@ public:
     uint64_t _logid;
 };
 
-class log_thread : public base_thread {
+class log_thread : public rx_base_thread {
 public:
     log_thread();
     virtual ~log_thread();

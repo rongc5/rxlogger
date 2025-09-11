@@ -5,15 +5,15 @@
 #include "../include/base_thread.h"
 #include "../include/logger_util.h"
 
-std::vector<base_thread*> base_thread::_all_threads;
-std::mutex base_thread::_threads_mutex;
+std::vector<rx_base_thread*> rx_base_thread::_all_threads;
+std::mutex rx_base_thread::_threads_mutex;
 
-base_thread::base_thread() : _run_flag(false) {
+rx_base_thread::rx_base_thread() : _run_flag(false) {
     std::lock_guard<std::mutex> lock(_threads_mutex);
     _all_threads.push_back(this);
 }
 
-base_thread::~base_thread() {
+rx_base_thread::~rx_base_thread() {
     stop();
     // Ensure thread is joined to avoid std::terminate at program exit
     join();
@@ -25,7 +25,7 @@ base_thread::~base_thread() {
     }
 }
 
-void base_thread::start() {
+void rx_base_thread::start() {
     if (!_run_flag) {
         _run_flag = true;
         try {
@@ -40,18 +40,18 @@ void base_thread::start() {
     }
 }
 
-void base_thread::stop() {
+void rx_base_thread::stop() {
     _run_flag = false;
 }
 
-void base_thread::join() {
+void rx_base_thread::join() {
     if (_thread.joinable()) {
         _thread.join();
     }
 }
 
 
-void base_thread::join_all_thread() {
+void rx_base_thread::join_all_thread() {
     std::lock_guard<std::mutex> lock(_threads_mutex);
     for (auto* thread : _all_threads) {
         if (thread) {

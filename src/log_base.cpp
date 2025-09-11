@@ -3,6 +3,8 @@
 log_conf::log_conf(const char* sk_conf) {
     _log_conf_filename.append(sk_conf);  
     _last_load = 0;
+    // Initialize configuration on construction
+    load();
 }
 
 int log_conf::load() {
@@ -140,8 +142,11 @@ void log_conf::do_parse() {
 }
 
 bool log_conf::need_reload() {
+    if (_log_conf_filename.empty()) {
+        return false;
+    }
+    
     struct stat st;
-
     if (stat(_log_conf_filename.c_str(), &st) == 0 && S_ISREG(st.st_mode) && st.st_mtime != _last_load) {    
         return true;
     }    

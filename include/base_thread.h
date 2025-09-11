@@ -1,13 +1,13 @@
-#ifndef __BASE_THREAD_H__
-#define __BASE_THREAD_H__
+#ifndef __RX_BASE_THREAD_H__
+#define __RX_BASE_THREAD_H__
 
 #include "logger_def.h"
 
-// Base thread class
-class base_thread {
+// Base thread class for rxlogger
+class rx_base_thread {
 public:
-    base_thread();
-    virtual ~base_thread();
+    rx_base_thread();
+    virtual ~rx_base_thread();
     
     void start();
     void stop();
@@ -25,7 +25,7 @@ public:
 protected:
     volatile bool _run_flag;
     std::thread _thread;
-    static std::vector<base_thread*> _all_threads;
+    static std::vector<rx_base_thread*> _all_threads;
     static std::mutex _threads_mutex;
 };
 

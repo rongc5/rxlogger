@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
     cout << "开始测试日志系统..." << endl;
     
     // 测试1: 初始化日志系统
-    const char* log_conf_path = "logger.conf";
+    const char* log_conf_path = "test/logger.conf";
     LOG_INIT(log_conf_path);
     
     cout << "日志系统初始化完成" << endl;

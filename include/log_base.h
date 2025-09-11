@@ -48,6 +48,11 @@ public:
         return _current.get();
     }
     
+    bool need_reload() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _current && _current->need_reload();
+    }
+    
     int reload() {
         std::lock_guard<std::mutex> lock(_mutex);
         if (_backup && _backup->need_reload()) {

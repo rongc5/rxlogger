@@ -1,0 +1,4 @@
+[log_id:1000][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试
+[log_id:1000][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[17:main:test/test_logger.cpp] 这是一条调试日志，数值: %d42
+[log_id:1001][test_logger]:[2025-09-11 02:03:16.107] DEBUG:[253726873891136]:[24:main:test/test_logger.cpp]流式调试日志: 123 字符串: 测试

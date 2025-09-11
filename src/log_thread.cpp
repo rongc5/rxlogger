@@ -46,6 +46,9 @@ void log_thread::wait_for_init() {
 
 
 bool log_thread::check_type(LogType type) {
+    if (!_rlog_conf) {
+        return false;
+    }
     log_conf* conf = _rlog_conf->current();
     if (conf && (conf->type & type) != 0) {
         return true;
@@ -157,19 +160,14 @@ void log_thread::log_thread_init(const char* path) {
     char tmp_buff[RX_SIZE_LEN_128];
     rx_get_proc_name(tmp_buff, sizeof(tmp_buff));
     _proc_name.append(tmp_buff);
-    
-    // Notify that initialization is complete
-    {
-        std::lock_guard<std::mutex> lock(_init_mutex);
-        _init_completed = true;
-    }
-    _init_cv.notify_all();
 }
 
 void log_thread::log_conf_init() {
-    if (_rlog_conf) {
-        _rlog_conf->reload();
+    if (!_rlog_conf) {
+        return;
     }
+    
+    _rlog_conf->reload();
 
     log_conf* conf = _rlog_conf->current();
     if (conf && !conf->log_path.empty()) {
@@ -180,6 +178,13 @@ void log_thread::log_conf_init() {
 }
 
 void* log_thread::run() {
+    // Notify that initialization is complete and thread is running
+    {
+        std::lock_guard<std::mutex> lock(_init_mutex);
+        _init_completed = true;
+    }
+    _init_cv.notify_all();
+    
     while (get_run_flag()) {
         obj_process();
     }
@@ -245,7 +250,7 @@ void log_thread::obj_process() {
     
     process_recv_buf(buf, ret);
 
-    if (_rlog_conf && _rlog_conf->current() && _rlog_conf->current()->need_reload()) {
+    if (_rlog_conf && _rlog_conf->need_reload()) {
         log_conf_init();
     }
 }
